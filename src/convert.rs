@@ -76,6 +76,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
     }
+    println!("Processing: {}", opt.input.display());
     let mut files = construct_index(&opt.input)?;
     fs::create_dir_all(&opt.output)?;
 

@@ -235,6 +235,7 @@ pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
     }
+    println!("Processing: {}", opt.input.display());
     let mut index = construct_index(&opt)?;
     fs::create_dir_all(&opt.output)?;
     save_index(&index, &opt.output)?;
