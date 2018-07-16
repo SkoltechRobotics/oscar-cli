@@ -1,11 +1,11 @@
 use libc::{int32_t, uint8_t, uint32_t, size_t, c_void};
 
-pub enum FlifDecoder {}
-pub enum FlifImage {}
-pub enum FlifInfo {}
-
 #[link(name = "flif_dec")]
 extern "C" {
+    pub type FlifDecoder;
+    pub type FlifImage;
+    pub type FlifInfo;
+
     pub fn flif_create_decoder() -> *mut FlifDecoder;
     pub fn flif_destroy_decoder(ptr: *mut FlifDecoder);
     pub fn flif_decoder_decode_memory(

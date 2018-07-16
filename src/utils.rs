@@ -6,6 +6,8 @@ use {bayer, png, flif};
 use png::HasParameters;
 use opt::{Format, FormatOpt};
 
+const PIX_N: usize = 256;
+
 pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
     let file_size = fs::metadata(path)?.len();
     let mut data = Vec::with_capacity(file_size as usize);
@@ -24,10 +26,11 @@ pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
             "unexpected image properites".to_string(),
         ))?,
     };
-    // get sum of first 128 pixels to check for erroneous decoding
+    // get sum of first 256 pixels to check for erroneous decoding
     // see: https://github.com/FLIF-hub/FLIF/issues/517
-    let sum100 = img_data[..128].iter().fold(0u32, |a, v| a + *v as u32);
-    if sum100 == 128*15 || sum100 == 0 { return read_flif(path); }
+    let sum = img_data[..PIX_N].iter().fold(0u32, |a, v| a + *v as u32);
+    let pval = img_data[0] as u32;
+    if sum == (PIX_N as u32)*pval { return read_flif(path); }
 
     Ok(img_data)
 }
@@ -63,6 +66,55 @@ pub fn save_img(
     }
 }
 
+pub fn save_stereo_img(
+    name: &str, mut left: Vec<u8>, mut right: Vec<u8>,
+    opt: &FormatOpt, out_dir: &Path, width: u32, height: u32,
+) -> io::Result<()> {
+    assert_eq!(left.len(), (width*height) as usize);
+    assert_eq!(right.len(), (width*height) as usize);
+    let is_color = if opt.demosaic {
+        left = bayer::bggr_bayer(&left, width as usize, height as usize);
+        right = bayer::bggr_bayer(&right, width as usize, height as usize);
+        true
+    } else {
+        false
+    };
+    let mut width = width;
+    let mut height = height;
+    if opt.scale != 1 {
+        left = resize(&left, width, height, opt.scale);
+        right = resize(&right, width, height, opt.scale);
+        width /= opt.scale as u32;
+        height /= opt.scale as u32;
+    }
+    let data = concat_images(left, right, width as usize, height as usize);
+
+    let mut path = out_dir.to_path_buf();
+    path.push(name);
+    let flag = path.set_extension(match opt.format {
+        Format::Pnm => "pnm",
+        Format::Png => "png",
+    });
+    assert!(flag, "extension set check");
+    match opt.format {
+        Format::Pnm => save_pnm(&path, &data, 2*width, height, is_color),
+        Format::Png => save_png(&path, &data, 2*width, height, is_color),
+    }
+}
+
+fn concat_images(left: Vec<u8>, right: Vec<u8>, w: usize, h: usize) -> Vec<u8> {
+    assert_eq!(left.len(), w*h);
+    assert_eq!(right.len(), w*h);
+    let mut out = vec![0; 2*w*h];
+    for ((l, r), o) in left.exact_chunks(w)
+        .zip(right.exact_chunks(w))
+        .zip(out.exact_chunks_mut(2*w))
+    {
+        o[..w].copy_from_slice(l);
+        o[w..].copy_from_slice(r);
+    }
+    out
+}
 
 fn save_pnm(
     path: &Path, data: &[u8], width: u32, height: u32, is_color: bool,

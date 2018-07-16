@@ -6,7 +6,7 @@ use std::{io, fs, cmp, thread, error};
 use {num_cpus, pbr};
 
 use opt::ConvertStereoOpt;
-use utils::{read_flif, save_img};
+use utils::{read_flif, save_stereo_img};
 
 const FPS: u64 = 30;
 
@@ -86,7 +86,7 @@ fn construct_index(opt: &ConvertStereoOpt) -> io::Result<StereoIndex> {
     let ts_l = get_timestamps(&left)?;
     let ts_r = get_timestamps(&right)?;
 
-    assert!((ts_l[0].os as isize - ts_r[0].os as isize).abs() < 5);
+    assert!((ts_l[0].os as isize - ts_r[0].os as isize).abs() < 10);
 
     let nl = ts_l.len();
     let nr = ts_r.len();
@@ -148,20 +148,6 @@ fn read_flif2(ts: Option<Timestamp>, dir: &Path) -> io::Result<Vec<u8>> {
     }
 }
 
-fn concat_images(left: Vec<u8>, right: Vec<u8>) -> Vec<u8> {
-    assert_eq!(left.len(), 2448*2048);
-    assert_eq!(right.len(), 2448*2048);
-    let mut out = vec![0; 2*2448*2048];
-    let width = 2448;
-    for (i, (l, r)) in left.iter().zip(right.iter()).enumerate() {
-        let x = i % 2448;
-        let y = i / 2448;
-        out[2*width*y + x] = *l;
-        out[2*width*y + x + width] = *r;
-    }
-    out
-}
-
 fn worker(
     files: &Arc<Mutex<StereoIndex>>, chan: &mpsc::Sender<WorkerMessage>,
     opt: ConvertStereoOpt,
@@ -189,10 +175,9 @@ fn worker(
                 .and_then(|left| Ok((left, read_flif2(pair.1, &right)?)))
                 .and_then(|(left_img, right_img)| {
                     let file_name = format!("{}", n);
-                    let img_data = concat_images(left_img, right_img);
-                    save_img(
-                        &file_name, img_data, &opt.format, &opt.output,
-                        2*2448, 2048,
+                    save_stereo_img(
+                        &file_name, left_img, right_img,
+                        &opt.format, &opt.output, 2448, 2048,
                     )
                 });
 

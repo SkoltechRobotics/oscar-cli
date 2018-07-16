@@ -1,4 +1,5 @@
 #![feature(exact_chunks)]
+#![feature(extern_types)]
 extern crate pbr;
 extern crate libc;
 #[macro_use] extern crate structopt;
