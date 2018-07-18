@@ -6,30 +6,28 @@ use std::{io, fs, thread, error};
 use {num_cpus, pbr};
 
 use opt::ConvertOpt;
-use utils::{read_flif, save_img};
+use utils::{read_flif, save_img, get_timestamp, Timestamp};
 
-fn construct_index(dir_path: &Path) -> io::Result<Vec<PathBuf>> {
+type MonoIndex = Vec<(usize, PathBuf, Timestamp)>;
+
+fn construct_index(dir_path: &Path) -> io::Result<MonoIndex> {
     print!("Building list of images... ");
     io::stdout().flush()?;
-    let mut files = fs::read_dir(dir_path)?
+    let mut index = fs::read_dir(dir_path)?
         .map(|entry| {
             let path = entry?.path();
-            if !path.is_file() {
-                panic!("got dir")
-            }
-            match path.extension() {
-                Some(ext) if ext == "flif" => (),
-                _ => panic!("temp"),
-            }
-            // TODO: add filename pattern check
-            Ok(path)
+            let t = get_timestamp(&path)?;
+            Ok((path, t))
         })
-        .collect::<io::Result<Vec<PathBuf>>>()?;
-    // it assumes that image follows naming pattern and was taken between
-    // 2001-09-09 and 2286-11-20 (1M and 10M seconds of UNIX epoch respectively)
-    files.sort_unstable_by(|a, b| b.cmp(a));
-    println!("Done. Images found: {}", files.len());
-    Ok(files)
+        .collect::<io::Result<Vec<(PathBuf, Timestamp)>>>()?;
+    index.sort_unstable_by(|a, b| a.1.os.cmp(&b.1.os));
+    let index: MonoIndex = index.into_iter()
+        .enumerate()
+        .rev()
+        .map(|(i, e)| (i, e.0, e.1))
+        .collect();
+    println!("Done. Images found: {}", index.len());
+    Ok(index)
 }
 
 enum WorkerMessage {
@@ -39,25 +37,23 @@ enum WorkerMessage {
 }
 
 fn worker(
-    files: &Arc<Mutex<Vec<PathBuf>>>, chan: &mpsc::Sender<WorkerMessage>,
-    opt: ConvertOpt,
+    index: &Arc<Mutex<MonoIndex>>, chan: &mpsc::Sender<WorkerMessage>,
+    opt: &ConvertOpt,
 ) {
-    let files = files.clone();
+    let index = index.clone();
     let chan = chan.clone();
+    let opt = opt.clone();
     thread::spawn(move|| {
         loop {
-            let path = match files.lock().expect("mutex failure").pop() {
-                Some(path) => path,
+            let (n, path, _) = match index.lock().expect("mutex failure").pop() {
+                Some(val) => val,
                 None => break,
             };
             let res = read_flif(&path)
                 .and_then(|img_data| {
-                    let file_name = path.file_name()
-                        .expect("file names already checked")
-                        .to_str()
-                        .expect("non-UTF8 filename");
+                    let file_name = format!("{}", n);
                     save_img(
-                        file_name, img_data, &opt.format, &opt.output,
+                        &file_name, img_data, &opt.format, &opt.output,
                         2448, 2048,
                     )
                 });
@@ -72,24 +68,43 @@ fn worker(
     });
 }
 
+/// Save index data to TSV file
+fn save_index(index: &MonoIndex, dir: &Path) -> io::Result<()>{
+    let mut index_path = dir.to_path_buf();
+    index_path.push("index.tsv");
+    let mut index_file = io::BufWriter::new(fs::File::create(index_path)?);
+    index_file.write_all(
+        b"N\tUNIX time, ms\tOS time, ms\tPrevious frame dt, ms\n"
+    )?;
+
+    let i = index.len() - 1;
+    let mut t_prev = get_timestamp(&index[i].1)?.os;
+    for (n, _, t) in index.iter().rev() {
+        write!(index_file, "{}\t{}\t{}\t{}\n", n, t.unix, t.os, t.os - t_prev)?;
+        t_prev = t.os;
+    }
+    Ok(())
+}
+
 pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
     }
     println!("Processing: {}", opt.input.display());
-    let mut files = construct_index(&opt.input)?;
+    let mut index = construct_index(&opt.input)?;
     fs::create_dir_all(&opt.output)?;
+    save_index(&index, &opt.output)?;
 
-    let n = files.len();
-    files.truncate(n - opt.skip as usize);
+    let n = index.len();
+    index.truncate(n - opt.skip as usize);
 
-    let count = files.len() as u64;
-    let files = Arc::new(Mutex::new(files));
+    let count = index.len() as u64;
+    let index = Arc::new(Mutex::new(index));
     let (sender, receiver) = mpsc::channel();
     let mut workers = opt.workers.unwrap_or_else(|| num_cpus::get() as u8);
 
     for _ in 0..workers {
-        worker(&files, &sender, opt.clone());
+        worker(&index, &sender, &opt);
     }
     let mut pb = pbr::ProgressBar::new(count);
     let mut counter = 0;

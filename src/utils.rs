@@ -6,12 +6,9 @@ use {bayer, png, flif};
 use png::HasParameters;
 use opt::{Format, FormatOpt};
 
-const PIX_N: usize = 256;
+const N_TRY: usize = 5;
 
-pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
-    let file_size = fs::metadata(path)?.len();
-    let mut data = Vec::with_capacity(file_size as usize);
-    fs::File::open(path)?.read_to_end(&mut data)?;
+fn read_flif_inner(data: &[u8]) -> io::Result<Vec<u8>> {
     let dec = flif::FlifDecoder::new(&data)
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidData,
             "FLIF decoder error".to_string(),
@@ -20,19 +17,31 @@ pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
     let (width, height) = (dec.width(), dec.height());
     let (depth, frames) = (dec.depth(), dec.frames());
     let channels = dec.channels();
-    let img_data = match (width, height, depth, channels, frames) {
-        (2448, 2048, 8, 1, 1) => dec.get_image_data(0),
+    match (width, height, depth, channels, frames) {
+        (2448, 2048, 8, 1, 1) => Ok(dec.get_image_data(0)),
         _ => Err(io::Error::new(io::ErrorKind::InvalidData,
             "unexpected image properites".to_string(),
         ))?,
-    };
-    // get sum of first 256 pixels to check for erroneous decoding
-    // see: https://github.com/FLIF-hub/FLIF/issues/517
-    let sum = img_data[..PIX_N].iter().fold(0u32, |a, v| a + *v as u32);
-    let pval = img_data[0] as u32;
-    if sum == (PIX_N as u32)*pval { return read_flif(path); }
+    }
+}
 
-    Ok(img_data)
+pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
+    let file_size = fs::metadata(path)?.len();
+    let mut data = Vec::with_capacity(file_size as usize);
+    fs::File::open(path)?.read_to_end(&mut data)?;
+
+    for _ in 0..N_TRY {
+        let img_data = read_flif_inner(&data)?;
+        // check for erroneous decoding
+        // see: https://github.com/FLIF-hub/FLIF/issues/517
+        let v0 = img_data[0];
+        if !img_data.iter().all(|v| *v == v0) { return Ok(img_data); }
+    }
+
+    eprintln!("WARNING! after {} tries failed to correctly decode: {}",
+        N_TRY, path.display());
+
+    read_flif_inner(&data)
 }
 
 pub fn save_img(
@@ -103,6 +112,7 @@ pub fn save_stereo_img(
 }
 
 fn concat_images(left: Vec<u8>, right: Vec<u8>, w: usize, h: usize) -> Vec<u8> {
+    let w = 3*w;
     assert_eq!(left.len(), w*h);
     assert_eq!(right.len(), w*h);
     let mut out = vec![0; 2*w*h];
@@ -176,4 +186,53 @@ fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Vec<u8> {
     }
 
     buf.iter().map(|v| (v >> (factor*2)) as u8).collect()
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct Timestamp {
+    pub unix: u64,
+    pub os: u64,
+}
+
+fn invalid_input(msg: &str, path: &Path) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        format!("{}: {}", msg, path.display())
+    )
+}
+
+pub fn get_timestamp(path: &Path) -> io::Result<Timestamp> {
+    if !path.is_file() {
+        Err(invalid_input("expected file, but got dir", path))?;
+    }
+    match path.extension() {
+        Some(ext) if ext == "flif" => (),
+        _ => Err(invalid_input("expected file with flif extension", path))?,
+    };
+
+    let file_name = path.file_stem()
+        .ok_or_else(|| invalid_input("failed to extract file stem", path))
+        .and_then(|v| v.to_str().ok_or_else(||
+            io::Error::new(
+                io::ErrorKind::Other,
+                format!(
+                    "failed to convert file name to str: {}", path.display(),
+                )
+            )
+        ))?;
+
+    let mut iter = file_name.split('_').map(|v| v.parse::<u64>());
+    let ts = match (iter.next(), iter.next(), iter.next()) {
+        (Some(Ok(unix)), Some(Ok(os)), None) => Timestamp { unix, os },
+        _ => Err(invalid_input("incorrect filename pattern", path))?,
+    };
+    Ok(ts)
+}
+
+pub fn get_timestamps(dir_path: &Path) -> io::Result<Vec<Timestamp>> {
+    let mut buf = fs::read_dir(dir_path)?
+        .map(|entry| entry.and_then(|e| get_timestamp(&e.path())))
+        .collect::<io::Result<Vec<Timestamp>>>()?;
+    buf.sort_unstable_by(|a, b| a.os.cmp(&b.os));
+    Ok(buf)
 }

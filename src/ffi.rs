@@ -1,6 +1,6 @@
 use libc::{int32_t, uint8_t, uint32_t, size_t, c_void};
 
-#[link(name = "flif_dec")]
+#[link(name = "flif")]
 extern "C" {
     pub type FlifDecoder;
     pub type FlifImage;

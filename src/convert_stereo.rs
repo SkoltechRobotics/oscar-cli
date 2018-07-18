@@ -6,15 +6,9 @@ use std::{io, fs, cmp, thread, error};
 use {num_cpus, pbr};
 
 use opt::ConvertStereoOpt;
-use utils::{read_flif, save_stereo_img};
+use utils::{read_flif, save_stereo_img, get_timestamps, Timestamp};
 
 const FPS: u64 = 30;
-
-#[derive(Copy, Clone, Debug)]
-struct Timestamp {
-    unix: u64,
-    os: u64,
-}
 
 type Pair = (Option<Timestamp>, Option<Timestamp>);
 type StereoIndex = Vec<(usize, Pair)>;
@@ -23,34 +17,6 @@ enum WorkerMessage {
     Ok(Pair),
     Err(Pair, io::Error),
     Done,
-}
-
-// TODO replace panics with errors
-fn get_timestamps(dir_path: &Path) -> io::Result<Vec<Timestamp>> {
-    let iter = fs::read_dir(dir_path)?;
-    let mut buf = Vec::with_capacity(iter.size_hint().0);
-    for entry in iter {
-        let path = entry?.path();
-        if !path.is_file() {
-            panic!("got dir")
-        }
-        match path.extension() {
-            Some(ext) if ext == "flif" => (),
-            _ => panic!("temp"),
-        }
-        let file_name = match path.file_stem() {
-            Some(val) => val.to_str().expect("non-UTF8 path"),
-            None => panic!("incorrect path: {}", dir_path.display()),
-        };
-        let mut iter = file_name.split('_').map(|v| v.parse::<u64>());
-        let ts = match (iter.next(), iter.next(), iter.next()) {
-            (Some(Ok(unix)), Some(Ok(os)), None) => Timestamp { unix, os },
-            _ => panic!("incorrect filename pattern"),
-        };
-        buf.push(ts);
-    }
-    buf.sort_unstable_by(|a, b| a.os.cmp(&b.os));
-    Ok(buf)
 }
 
 fn to_path(dir: &Path, ts: Timestamp) -> PathBuf {
