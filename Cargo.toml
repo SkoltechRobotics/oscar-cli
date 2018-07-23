@@ -10,5 +10,3 @@ png = "0.12"
 libc = "0.2"
 structopt = "0.2"
 
-[profile.release]
-debug = true
