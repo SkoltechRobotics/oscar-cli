@@ -4,13 +4,17 @@ extern crate pbr;
 #[macro_use] extern crate structopt;
 extern crate num_cpus;
 extern crate png;
+#[cfg(not(feature = "libflif"))]
 extern crate flif;
+#[cfg(not(feature = "libflif"))]
 extern crate memmap;
+#[cfg(feature = "libflif")]
+extern crate libc;
 
 use structopt::StructOpt;
 
-//mod ffi;
-//mod flif;
+#[cfg(feature = "libflif")]
+mod flif;
 mod opt;
 mod utils;
 mod convert;

@@ -1,4 +1,9 @@
-use {ffi, libc};
+use libc;
+
+mod ffi;
+mod util;
+
+pub use self::util::read_flif;
 
 #[derive(Debug, Copy, Clone)]
 pub struct DecodingError;

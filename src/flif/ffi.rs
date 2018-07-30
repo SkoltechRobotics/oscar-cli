@@ -26,5 +26,4 @@ extern "C" {
     pub fn flif_info_get_height(ptr: *mut FlifInfo) -> uint32_t;
     pub fn flif_info_get_nb_channels(ptr: *mut FlifInfo) -> uint8_t;
     pub fn flif_info_get_depth(ptr: *mut FlifInfo) -> uint8_t;
-
 }
