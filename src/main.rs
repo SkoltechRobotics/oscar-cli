@@ -1,15 +1,16 @@
 #![feature(exact_chunks)]
 #![feature(extern_types)]
 extern crate pbr;
-extern crate libc;
 #[macro_use] extern crate structopt;
 extern crate num_cpus;
 extern crate png;
+extern crate flif;
+extern crate memmap;
 
 use structopt::StructOpt;
 
-mod ffi;
-mod flif;
+//mod ffi;
+//mod flif;
 mod opt;
 mod utils;
 mod convert;

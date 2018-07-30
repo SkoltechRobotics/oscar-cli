@@ -1,11 +1,14 @@
 use std::path::Path;
 use std::{io, fs};
-use std::io::{Read, Write};
+use std::io::Write;
 
 use {bayer, png, flif};
 use png::HasParameters;
 use opt::{Format, FormatOpt};
 
+use memmap::Mmap;
+
+/*
 const N_TRY: usize = 5;
 
 fn read_flif_inner(data: &[u8]) -> io::Result<Vec<u8>> {
@@ -42,6 +45,27 @@ pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
         N_TRY, path.display());
 
     read_flif_inner(&data)
+}
+*/
+
+pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
+    let mmap = unsafe { Mmap::map(&fs::File::open(path)?)? };
+    let image = flif::Flif::decode(mmap.as_ref())
+        .map_err(|err| match err {
+            flif::Error::Io(err) => err,
+            err => io::Error::new(io::ErrorKind::InvalidData, err)
+        })?;
+    let header = image.info().header;
+    match header {
+        flif::components::Header {
+            width: 2448, height: 2048, num_frames: 1, interlaced: false,
+            bytes_per_channel: flif::components::BytesPerChannel::One,
+            channels: flif::colors::ColorSpace::Monochrome,
+        } => (),
+        _ => Err(io::Error::new(io::ErrorKind::InvalidData,
+            format!("unexpected image properites: {:?}", header)))?,
+    }
+    Ok(image.get_raw_pixels())
 }
 
 pub fn save_img(

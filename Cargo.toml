@@ -7,6 +7,6 @@ authors = ["Artyom Pavlov <newpavlov@gmail.com>"]
 num_cpus = "1"
 pbr = "1"
 png = "0.12"
-libc = "0.2"
 structopt = "0.2"
-
+flif = "0.3"
+memmap = "*"
