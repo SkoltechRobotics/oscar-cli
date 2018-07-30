@@ -26,11 +26,10 @@ pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
             width: 2448, height: 2048, num_frames: 1, interlaced: false,
             bytes_per_channel: flif::components::BytesPerChannel::One,
             channels: flif::colors::ColorSpace::Monochrome,
-        } => (),
+        } => Ok(image.get_raw_pixels()),
         _ => Err(io::Error::new(io::ErrorKind::InvalidData,
-            format!("unexpected image properites: {:?}", header)))?,
+            format!("unexpected image properites: {:?}", header))),
     }
-    Ok(image.get_raw_pixels())
 }
 
 pub fn save_img(
