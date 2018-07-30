@@ -10,6 +10,7 @@ png = "0.12"
 structopt = "0.2"
 libc = { version = "0.2", optional = true }
 
+# this condition does not work currently
 [target.'cfg(not(feature = "libflif"))'.dependencies]
 flif = "0.3"
 memmap = "0.6"
