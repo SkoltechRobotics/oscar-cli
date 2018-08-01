@@ -10,7 +10,7 @@ use opt::{Format, FormatOpt};
 pub use flif::read_flif;
 
 #[cfg(not(feature = "libflif"))]
-pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
+pub fn read_flif(path: &Path) -> io::Result<Box<[u8]>> {
     use memmap::Mmap;
     use flif;
 
@@ -26,14 +26,14 @@ pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
             width: 2448, height: 2048, num_frames: 1, interlaced: false,
             bytes_per_channel: flif::components::BytesPerChannel::One,
             channels: flif::colors::ColorSpace::Monochrome,
-        } => Ok(image.get_raw_pixels()),
+        } => Ok(image.into_raw()),
         _ => Err(io::Error::new(io::ErrorKind::InvalidData,
             format!("unexpected image properites: {:?}", header))),
     }
 }
 
 pub fn save_img(
-    name: &str, mut data: Vec<u8>, opt: &FormatOpt, out_dir: &Path,
+    name: &str, mut data: Box<[u8]>, opt: &FormatOpt, out_dir: &Path,
     width: u32, height: u32,
 ) -> io::Result<()> {
     assert_eq!(data.len(), (width*height) as usize);
@@ -45,6 +45,7 @@ pub fn save_img(
     };
     let mut width = width;
     let mut height = height;
+
     if opt.scale != 1 {
         data = resize(&data, width, height, opt.scale);
         width /= opt.scale as u32;
@@ -64,7 +65,7 @@ pub fn save_img(
 }
 
 pub fn save_stereo_img(
-    name: &str, mut left: Vec<u8>, mut right: Vec<u8>,
+    name: &str, mut left: Box<[u8]>, mut right: Box<[u8]>,
     opt: &FormatOpt, out_dir: &Path, width: u32, height: u32,
 ) -> io::Result<()> {
     assert_eq!(left.len(), (width*height) as usize);
@@ -99,11 +100,13 @@ pub fn save_stereo_img(
     }
 }
 
-fn concat_images(left: Vec<u8>, right: Vec<u8>, w: usize, h: usize) -> Vec<u8> {
+fn concat_images(left: Box<[u8]>, right: Box<[u8]>, w: usize, h: usize)
+    -> Box<[u8]>
+{
     let w = 3*w;
     assert_eq!(left.len(), w*h);
     assert_eq!(right.len(), w*h);
-    let mut out = vec![0; 2*w*h];
+    let mut out = vec![0; 2*w*h].into_boxed_slice();
     for ((l, r), o) in left.exact_chunks(w)
         .zip(right.exact_chunks(w))
         .zip(out.exact_chunks_mut(2*w))
@@ -152,7 +155,7 @@ fn save_png(
         .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
 }
 
-fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Vec<u8> {
+fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Box<[u8]> {
     assert_eq!(data.len() as u32, 3*width*height);
     assert!(scale == 2 || scale == 4 || scale == 8 || scale == 16 );
     // scale = 2^factor
@@ -173,7 +176,10 @@ fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Vec<u8> {
         }
     }
 
-    buf.iter().map(|v| (v >> (factor*2)) as u8).collect()
+    buf.iter()
+        .map(|v| (v >> (factor*2)) as u8)
+        .collect::<Vec<_>>()
+        .into_boxed_slice()
 }
 
 #[derive(Copy, Clone, Debug)]

@@ -59,7 +59,7 @@ impl FlifDecoder {
 
     pub fn frames(&self) -> u32 { self.images as u32 }
 
-    pub fn get_image_data(&self, n: usize) -> Vec<u8> {
+    pub fn get_image_data(&self, n: usize) -> Box<[u8]> {
         let image = unsafe { ffi::flif_decoder_get_image(self.decoder, n) };
         let w = self.width as usize;
         let h = self.height as usize;
@@ -80,6 +80,6 @@ impl FlifDecoder {
                 };
             }
         }
-        buf
+        buf.into_boxed_slice()
     }
 }

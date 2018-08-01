@@ -12,7 +12,7 @@ libc = { version = "0.2", optional = true }
 
 # this condition does not work currently
 [target.'cfg(not(feature = "libflif"))'.dependencies]
-flif = "0.3"
+flif = { git = "https://github.com/newpavlov/flif.rs", branch="pixels_rework"}
 memmap = "0.6"
 
 [features]

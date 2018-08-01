@@ -107,10 +107,10 @@ fn construct_index(opt: &ConvertStereoOpt) -> io::Result<StereoIndex> {
 }
 
 /// returns empty image if `ts` is None
-fn read_flif2(ts: Option<Timestamp>, dir: &Path) -> io::Result<Vec<u8>> {
+fn read_flif2(ts: Option<Timestamp>, dir: &Path) -> io::Result<Box<[u8]>> {
     match ts {
         Some(ts) => read_flif(&to_path(dir, ts)),
-        None => Ok(vec![0; 2448*2048]),
+        None => Ok(vec![0; 2448*2048].into_boxed_slice()),
     }
 }
 

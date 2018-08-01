@@ -1,9 +1,10 @@
 /// Demosaic image using bi-linear approach assuming BGGR pattern
-pub fn bggr_bayer(data: &[u8], width: usize, height: usize) -> Vec<u8> {
+pub fn bggr_bayer(data: &[u8], width: usize, height: usize) -> Box<[u8]> {
     assert_eq!(data.len(), width*height);
     assert_eq!(width % 2, 0);
     assert_eq!(height % 2, 0);
-    let mut buf = vec![0u8; 3*width*height];
+    let buf = vec![0u8; 3*width*height];
+    let mut buf = buf.into_boxed_slice();
 
     unsafe {
         top_left_corner(&mut buf, data, width, height);
