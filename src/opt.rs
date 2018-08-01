@@ -5,7 +5,7 @@ use std::path::PathBuf;
     about = "Tool for converting and previewing OS:Car project images")]
 pub enum OscarOpt {
     /// Convert images from single camera
-    #[structopt(name = "convert")]
+    #[structopt(name = "convert_mono")]
     Convert {
         #[structopt(flatten)]
         opt: ConvertOpt
