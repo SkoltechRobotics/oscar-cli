@@ -17,7 +17,7 @@ use structopt::StructOpt;
 mod flif;
 mod opt;
 mod utils;
-mod convert;
+mod convert_mono;
 mod convert_stereo;
 mod bayer;
 
@@ -26,7 +26,7 @@ use opt::OscarOpt;
 fn main() {
     let opt = OscarOpt::from_args();
     let res = match opt {
-        OscarOpt::Convert { opt } => convert::convert(opt),
+        OscarOpt::Convert { opt } => convert_mono::convert(opt),
         OscarOpt::ConvertStereo { opt } => convert_stereo::convert(opt),
     };
     match res {
