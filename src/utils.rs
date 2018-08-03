@@ -85,7 +85,7 @@ pub fn save_stereo_img(
         width /= opt.scale as u32;
         height /= opt.scale as u32;
     }
-    let data = concat_images(left, right, width as usize, height as usize);
+    let data = concat_images(left, right, width as usize, height as usize, is_color);
 
     let mut path = out_dir.to_path_buf();
     path.push(name);
@@ -100,10 +100,10 @@ pub fn save_stereo_img(
     }
 }
 
-fn concat_images(left: Box<[u8]>, right: Box<[u8]>, w: usize, h: usize)
-    -> Box<[u8]>
-{
-    let w = 3*w;
+fn concat_images(
+    left: Box<[u8]>, right: Box<[u8]>, w: usize, h: usize, is_color: bool
+) -> Box<[u8]> {
+    let w = if is_color { 3*w } else { w };
     assert_eq!(left.len(), w*h);
     assert_eq!(right.len(), w*h);
     let mut out = vec![0; 2*w*h].into_boxed_slice();
