@@ -6,7 +6,7 @@ use super::FlifDecoder;
 
 const N_TRY: usize = 5;
 
-fn read_flif_inner(data: &[u8]) -> io::Result<Vec<u8>> {
+fn read_flif_inner(data: &[u8]) -> io::Result<Box<[u8]>> {
     let dec = FlifDecoder::new(&data)
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidData,
             "FLIF decoder error".to_string(),
@@ -23,7 +23,7 @@ fn read_flif_inner(data: &[u8]) -> io::Result<Vec<u8>> {
     }
 }
 
-pub fn read_flif(path: &Path) -> io::Result<Vec<u8>> {
+pub fn read_flif(path: &Path) -> io::Result<Box<[u8]>> {
     let file_size = fs::metadata(path)?.len();
     let mut data = Vec::with_capacity(file_size as usize);
     fs::File::open(path)?.read_to_end(&mut data)?;
