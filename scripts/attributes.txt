@@ -1,0 +1,187 @@
+sign_1.1
+sign_1.2
+sign_1.3 @select=subtype:1,2
+sign_1.4 @select=subtype:1,2,3,4,5,6
+sign_1.5
+sign_1.6
+sign_1.7
+sign_1.8 @checkbox=tmp:false
+sign_1.9
+sign_1.10
+sign_1.11 @select=subtype:1,2
+sign_1.12 @select=subtype:1,2
+sign_1.13
+sign_1.14
+sign_1.15 @checkbox=tmp:false
+sign_1.16 @checkbox=tmp:false
+sign_1.17
+sign_1.18 @checkbox=tmp:false
+sign_1.19 @checkbox=tmp:false
+sign_1.20 @select=subtype:1,2,3 @checkbox=tmp:false
+sign_1.21 @checkbox=tmp:false
+sign_1.22
+sign_1.23
+sign_1.24
+sign_1.25
+sign_1.26
+sign_1.27
+sign_1.28
+sign_1.29
+sign_1.30
+sign_1.31
+sign_1.32
+sign_1.33 @checkbox=tmp:false
+sign_1.34 @select=subtype:1,2,3
+sign_2.1
+sign_2.2
+sign_2.3 @select=subtype:1,2,3,4,5,6,7
+sign_2.4
+sign_2.5
+sign_2.6 @checkbox=tmp:false
+sign_2.7
+sign_3.1
+sign_3.2
+sign_3.3
+sign_3.4
+sign_3.5
+sign_3.6
+sign_3.7
+sign_3.8
+sign_3.9
+sign_3.10
+sign_3.11 @text=value:NA @checkbox=tmp:false
+sign_3.12 @text=value:NA @checkbox=tmp:false
+sign_3.13 @text=value:NA @checkbox=tmp:false
+sign_3.14 @text=value:NA @checkbox=tmp:false
+sign_3.15 @text=value:NA @checkbox=tmp:false
+sign_3.16 @text=value:NA @checkbox=tmp:false
+sign_3.17 @select=subtype:1,2,3
+sign_3.18 @select=subtype:1,2 @checkbox=tmp:false
+sign_3.19 @checkbox=tmp:false
+sign_3.20 @checkbox=tmp:false
+sign_3.21 @checkbox=tmp:false
+sign_3.22 @checkbox=tmp:false
+sign_3.23 @checkbox=tmp:false
+sign_3.24 @text=value:NA @checkbox=tmp:false
+sign_3.25 @text=value:NA @checkbox=tmp:false
+sign_3.26
+sign_3.27
+sign_3.28
+sign_3.29
+sign_3.30
+sign_3.31
+sign_3.32
+sign_3.33
+sign_4.1 @select=subtype:1,2,3,4,5,6
+sign_4.2 @select=subtype:1,2,3
+sign_4.3
+sign_4.4 @select=subtype:1,2
+sign_4.5 @select=subtype:1,2,3,4,5,6,7
+sign_4.6 @text=value:NA
+sign_4.7 @text=value:NA
+sign_4.8 @select=subtype:1,2,3
+sign_5.1
+sign_5.2
+sign_5.3
+sign_5.4
+sign_5.5
+sign_5.6
+sign_5.7 @select=subtype:1,2
+sign_5.8
+sign_5.9
+sign_5.10
+sign_5.11 @select=subtype:1,2
+sign_5.12 @select=subtype:1,2
+sign_5.13 @select=subtype:1,2,3,4
+sign_5.14 @select=subtype:0,1,2,3
+sign_5.15 @select=subtype:1,2,3,4,5,6,7,8
+sign_5.16
+sign_5.17
+sign_5.18
+sign_5.19 @select=subtype:1,2
+sign_5.20
+sign_5.21
+sign_5.22
+sign_5.23.1 @text=value:NA
+sign_5.23.2
+sign_5.24.1 @text=value:NA
+sign_5.24.2
+sign_5.25 @text=value:NA
+sign_5.26 @text=value:NA
+sign_5.27
+sign_5.28
+sign_5.29
+sign_5.31
+sign_5.32
+sign_5.33
+sign_5.34
+sign_6.1
+sign_6.2
+sign_6.3.1
+sign_6.3.2 @text=value:NA
+sign_6.4
+sign_6.5
+sign_6.6
+sign_6.7
+sign_6.8 @select=subtype:1,2,3
+sign_6.9 @select=subtype:1,2,3
+sign_6.10 @select=subtype:1,2,3
+sign_6.11 @text=value:NA
+sign_6.12
+sign_6.13
+sign_6.14 @select=subtype:1,2
+sign_6.15 @select=subtype:1,2,3
+sign_6.16
+sign_6.17
+sign_6.18 @select=subtype:1,2,3
+sign_6.19 @select=subtype:1,2
+sign_6.20 @select=subtype:1,2
+sign_7.1
+sign_7.2
+sign_7.3
+sign_7.4
+sign_7.5
+sign_7.6
+sign_7.7
+sign_7.8
+sign_7.9
+sign_7.10
+sign_7.11
+sign_7.12
+sign_7.13
+sign_7.14
+sign_7.15
+sign_7.16
+sign_7.17
+sign_7.18
+sign_7.19
+sign_7.20
+sign_8.1 @select=subtype:1,2,3,4 @text=value:NA
+sign_8.2 @select=subtype:1,2,5,6 @text=value:NA
+sign_8.2.3
+sign_8.2.4
+sign_8.3 1-3
+sign_8.4 1-14
+sign_8.5.1
+sign_8.5.2
+sign_8.5 @select=subtype:3,4,5,6,7 @text=value:NA
+sign_8.6 @select=subtype:1,2,3,4,5,6,7,8,9
+sign_8.7
+sign_8.8
+sign_8.9 @text=value:NA
+sign_8.9.1
+sign_8.10
+sign_8.11 @text=value:NA
+sign_8.12
+sign_8.13
+sign_8.14
+sign_8.15
+sign_8.16
+sign_8.17
+sign_8.18
+sign_8.19
+sign_8.20 @select=subtype:1,2
+sign_8.21 @select=subtype:1,2,3
+sign_8.22 @select=subtype:1,2,3
+sign_8.23
+sign_8.24

@@ -140,7 +140,7 @@ fn worker(
             let res = read_flif2(pair.0, &left)
                 .and_then(|left| Ok((left, read_flif2(pair.1, &right)?)))
                 .and_then(|(left_img, right_img)| {
-                    let file_name = format!("{}", n);
+                    let file_name = format!("{:#06}", n);
                     save_stereo_img(
                         &file_name, left_img, right_img,
                         &opt.format, &opt.output, 2448, 2048,
@@ -170,12 +170,12 @@ fn save_index(index: &StereoIndex, dir: &Path) -> io::Result<()>{
 
     for (n, pair) in index.iter().rev() {
         let line = match pair {
-            (Some(l), Some(r)) => format!("{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
+            (Some(l), Some(r)) => format!("{:#06}\t{}\t{}\t{}\t{}\t{}\t{}\n",
                 n, l.unix, r.unix, l.os, r.os,
                 l.unix as i64 - r.unix as i64, l.os as i64 - r.os as i64 ),
-            (Some(l), None) => format!("{}\t{}\t\t{}\t\t\t\n", n, l.unix, l.os),
-            (None, Some(r)) => format!("{}\t\t{}\t\t{}\t\t\n", n, r.unix, r.os),
-            (None, None) => format!("{}\t\t\t\t\t\t\n", n),
+            (Some(l), None) => format!("{:#06}\t{}\t\t{}\t\t\t\n", n, l.unix, l.os),
+            (None, Some(r)) => format!("{:#06}\t\t{}\t\t{}\t\t\n", n, r.unix, r.os),
+            (None, None) => format!("{:#06}\t\t\t\t\t\t\n", n),
         };
         index_file.write_all(line.as_bytes())?;
     }

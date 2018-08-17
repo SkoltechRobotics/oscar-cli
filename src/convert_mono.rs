@@ -51,7 +51,7 @@ fn worker(
             };
             let res = read_flif(&path)
                 .and_then(|img_data| {
-                    let file_name = format!("{}", n);
+                    let file_name = format!("{:#06}", n);
                     save_img(
                         &file_name, img_data, &opt.format, &opt.output,
                         2448, 2048,
@@ -80,7 +80,8 @@ fn save_index(index: &MonoIndex, dir: &Path) -> io::Result<()>{
     let i = index.len() - 1;
     let mut t_prev = get_timestamp(&index[i].1)?.os;
     for (n, _, t) in index.iter().rev() {
-        write!(index_file, "{}\t{}\t{}\t{}\n", n, t.unix, t.os, t.os - t_prev)?;
+        write!(index_file, "{:#06}\t{}\t{}\t{}\n",
+            n, t.unix, t.os, t.os - t_prev)?;
         t_prev = t.os;
     }
     Ok(())
