@@ -160,8 +160,8 @@ sign_8.1 @select=subtype:1,2,3,4 @text=value:NA
 sign_8.2 @select=subtype:1,2,5,6 @text=value:NA
 sign_8.2.3
 sign_8.2.4
-sign_8.3 1-3
-sign_8.4 1-14
+sign_8.3 @select=subtype:1,2,3
+sign_8.4 @select=subtype:1,2,3,4,5,6,7,8,9,10,11,12,13,14
 sign_8.5.1
 sign_8.5.2
 sign_8.5 @select=subtype:3,4,5,6,7 @text=value:NA
