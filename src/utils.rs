@@ -5,6 +5,8 @@ use std::io::Write;
 use {bayer, png};
 use png::HasParameters;
 use opt::{Format, FormatOpt};
+use jpeg_encoder::JpegEncoder;
+use jpeg_encoder;
 
 #[cfg(feature = "libflif")]
 pub use flif::read_flif;
@@ -56,11 +58,13 @@ pub fn save_img(
     let flag = path.set_extension(match opt.format {
         Format::Pnm => "pnm",
         Format::Png => "png",
+        Format::Jpeg => "jpg",
     });
     assert!(flag, "extension set check");
     match opt.format {
         Format::Pnm => save_pnm(&path, &data, width, height, is_color),
         Format::Png => save_png(&path, &data, width, height, is_color),
+        Format::Jpeg => save_jpeg(&path, &data, width, height, is_color, opt.quality),
     }
 }
 
@@ -92,11 +96,13 @@ pub fn save_stereo_img(
     let flag = path.set_extension(match opt.format {
         Format::Pnm => "pnm",
         Format::Png => "png",
+        Format::Jpeg => "jpg",
     });
     assert!(flag, "extension set check");
     match opt.format {
         Format::Pnm => save_pnm(&path, &data, 2*width, height, is_color),
         Format::Png => save_png(&path, &data, 2*width, height, is_color),
+        Format::Jpeg => save_jpeg(&path, &data, 2*width, height, is_color, opt.quality),
     }
 }
 
@@ -153,6 +159,24 @@ fn save_png(
     let mut writer = encoder.write_header()?;
     writer.write_image_data(data)
         .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+}
+
+fn save_jpeg(
+    path: &Path, data: &[u8], width: u32, height: u32, is_color: bool, q: u8,
+) -> io::Result<()> {
+    let target_len = if is_color { 3*width*height } else { width*height };
+    assert_eq!(data.len() as u32, target_len);
+
+    let file = fs::File::create(path)?;
+    let mut writer = io::BufWriter::new(file);
+    let mut encoder = JpegEncoder::new_with_quality(&mut writer, q);
+
+    let color = match is_color {
+        true => jpeg_encoder::Color::RGB,
+        false => jpeg_encoder::Color::Gray,
+    };
+
+    encoder.encode(data, width, height, color)
 }
 
 fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Box<[u8]> {

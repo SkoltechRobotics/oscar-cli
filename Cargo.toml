@@ -8,12 +8,6 @@ num_cpus = "1"
 pbr = "1"
 png = "0.12"
 structopt = "0.2"
-libc = { version = "0.2", optional = true }
-
-# this condition does not work currently
-[target.'cfg(not(feature = "libflif"))'.dependencies]
-flif = { git = "https://github.com/newpavlov/flif.rs", branch="pixels_rework"}
+flif = { git = "https://github.com/dgriffen/flif.rs" }
 memmap = "0.6"
-
-[features]
-libflif = ["libc"]
+jpeg-encoder = { path = "jpeg-encoder" }

@@ -19,10 +19,11 @@ pub enum OscarOpt {
     },
 }
 
-#[derive(StructOpt, Copy, Clone)]
+#[derive(StructOpt, Copy, Clone, Eq, PartialEq)]
 pub enum Format {
     Pnm,
     Png,
+    Jpeg,
 }
 
 impl ::std::str::FromStr for Format {
@@ -32,6 +33,7 @@ impl ::std::str::FromStr for Format {
         match s {
             "pnm" => Ok(Format::Pnm),
             "png" => Ok(Format::Png),
+            "jpeg" => Ok(Format::Jpeg),
             _ => Err("unexpected format")
         }
     }
@@ -98,11 +100,14 @@ pub struct FormatOpt {
     /// Apply bi-linear demosaicing
     #[structopt(short = "d")]
     pub demosaic: bool,
-    /// Format of output files. Supported formats: pnm, png.
+    /// Format of output files. Supported formats: pnm, png, jpeg.
     #[structopt(short = "f", parse(try_from_str), default_value = "png")]
     pub format: Format,
     /// Downscale images using given scale factor. Can be used only with enabled
     /// demosaicing. Accepted values: 1, 2, 4, 8, 16.
     #[structopt(short = "s", default_value = "1", parse(try_from_str="parse_scale"))]
     pub scale: u8,
+    /// Encoding quality (usable only with format equal to jpeg)
+    #[structopt(short = "q", default_value = "90")]
+    pub quality: u8,
 }

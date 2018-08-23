@@ -5,7 +5,7 @@ use std::{io, fs, thread, error};
 
 use {num_cpus, pbr};
 
-use opt::ConvertOpt;
+use opt::{ConvertOpt, Format};
 use utils::{read_flif, save_img, get_timestamp, Timestamp};
 
 type MonoIndex = Vec<(usize, PathBuf, Timestamp)>;
@@ -90,6 +90,9 @@ fn save_index(index: &MonoIndex, dir: &Path) -> io::Result<()>{
 pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
+    }
+    if !opt.format.demosaic && opt.format.format == Format::Jpeg {
+        Err("don't use JPEG without demosaicing")?
     }
     println!("Processing: {}", opt.input.display());
     let mut index = construct_index(&opt.input)?;

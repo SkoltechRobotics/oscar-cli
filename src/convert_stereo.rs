@@ -5,7 +5,7 @@ use std::{io, fs, cmp, thread, error};
 
 use {num_cpus, pbr};
 
-use opt::ConvertStereoOpt;
+use opt::{ConvertStereoOpt, Format};
 use utils::{read_flif, save_stereo_img, get_timestamps, Timestamp};
 
 const FPS: u64 = 30;
@@ -185,6 +185,9 @@ fn save_index(index: &StereoIndex, dir: &Path) -> io::Result<()>{
 pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
+    }
+    if !opt.format.demosaic && opt.format.format == Format::Jpeg {
+        Err("don't use JPEG without demosaicing")?
     }
     println!("Processing: {}", opt.input.display());
     let mut index = construct_index(&opt)?;

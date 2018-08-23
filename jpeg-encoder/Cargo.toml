@@ -1,0 +1,11 @@
+[package]
+name = "jpeg-encoder"
+version = "0.1.0"
+authors = ["Piston Developers"]
+
+[dependencies]
+byteorder = "1"
+num-iter = "0.1"
+
+[dev-dependencies]
+jpeg-decoder = "0.1"
