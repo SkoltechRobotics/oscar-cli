@@ -20,6 +20,7 @@ use std::io::{self, Write};
 use entropy::build_huff_lut;
 use consts::*;
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Color {
     RGB,
     RGBA,
@@ -71,10 +72,10 @@ impl<'a, W: Write + 'a> BitWriter<'a, W> {
 
         while self.nbits >= 8 {
             let byte = (self.accumulator & (0xFFFF_FFFFu32 << 24)) >> 24;
-            try!(self.w.write_all(&[byte as u8]));
+            self.w.write_all(&[byte as u8])?;
 
             if byte == 0xFF {
-                try!(self.w.write_all(&[0x00]));
+                self.w.write_all(&[0x00])?;
             }
 
             self.nbits -= 8;
@@ -110,8 +111,8 @@ impl<'a, W: Write + 'a> BitWriter<'a, W> {
         let diff = dcval - prevdc;
         let (size, value) = encode_coefficient(diff);
 
-        try!(self.huffman_encode(size, dctable));
-        try!(self.write_bits(value, size));
+        self.huffman_encode(size, dctable)?;
+        self.write_bits(value, size)?;
 
         // Figure F.2
         let mut zero_run = 0;
@@ -122,22 +123,22 @@ impl<'a, W: Write + 'a> BitWriter<'a, W> {
 
             if block[UNZIGZAG[k] as usize] == 0 {
                 if k == 63 {
-                    try!(self.huffman_encode(0x00, actable));
+                    self.huffman_encode(0x00, actable)?;
                     break;
                 }
 
                 zero_run += 1;
             } else {
                 while zero_run > 15 {
-                    try!(self.huffman_encode(0xF0, actable));
+                    self.huffman_encode(0xF0, actable)?;
                     zero_run -= 16;
                 }
 
                 let (size, value) = encode_coefficient(block[UNZIGZAG[k] as usize]);
                 let symbol = (zero_run << 4) | size;
 
-                try!(self.huffman_encode(symbol, actable));
-                try!(self.write_bits(value, size));
+                self.huffman_encode(symbol, actable)?;
+                self.write_bits(value, size)?;
 
                 zero_run = 0;
 
@@ -151,12 +152,12 @@ impl<'a, W: Write + 'a> BitWriter<'a, W> {
     }
 
     fn write_segment(&mut self, marker: u8, data: Option<&[u8]>) -> io::Result<()> {
-        try!(self.w.write_all(&[0xFF]));
-        try!(self.w.write_all(&[marker]));
+        self.w.write_all(&[0xFF])?;
+        self.w.write_all(&[marker])?;
 
         if let Some(b) = data {
-            try!(self.w.write_u16::<BigEndian>(b.len() as u16 + 2));
-            try!(self.w.write_all(b));
+            self.w.write_u16::<BigEndian>(b.len() as u16 + 2)?;
+            self.w.write_all(b)?;
         }
         Ok(())
     }
@@ -177,14 +178,14 @@ pub struct JpegEncoder<'a, W: 'a> {
 
 impl<'a, W: Write> JpegEncoder<'a, W> {
     /// Create a new encoder that writes its output to ```w```
-    pub fn new(w: &mut W) -> JpegEncoder<W> {
-        JpegEncoder::new_with_quality(w, 75)
+    pub fn new(w: &'a mut W) -> Self {
+        Self::new_with_quality(w, 75)
     }
 
     /// Create a new encoder that writes its output to ```w```, and has
     /// the quality parameter ```quality``` with a value in the range 1-100
     /// where 1 is the worst and 100 is the best.
-    pub fn new_with_quality(w: &mut W, quality: u8) -> JpegEncoder<W> {
+    pub fn new_with_quality(w: &'a mut W, quality: u8) -> Self {
         let ld = build_huff_lut(&STD_LUMA_DC_CODE_LENGTHS, &STD_LUMA_DC_VALUES);
         let la = build_huff_lut(&STD_LUMA_AC_CODE_LENGTHS, &STD_LUMA_AC_VALUES);
 
@@ -238,7 +239,7 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
         tables.extend(STD_LUMA_QTABLE.iter().map(&scale_value));
         tables.extend(STD_CHROMA_QTABLE.iter().map(&scale_value));
 
-        JpegEncoder {
+        Self {
             writer: BitWriter::new(w),
 
             components,
@@ -263,12 +264,12 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
             Color::Gray | Color::GrayA => 1,
         };
 
-        try!(self.writer.write_segment(SOI, None));
+        self.writer.write_segment(SOI, None)?;
 
-        let mut buf = Vec::new();
+        let mut buf = Vec::with_capacity(32);
 
         build_jfif_header(&mut buf);
-        try!(self.writer.write_segment(APP0, Some(&buf)));
+        self.writer.write_segment(APP0, Some(&buf))?;
 
         build_frame_header(
             &mut buf,
@@ -277,14 +278,14 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
             height as u16,
             &self.components[..num_components],
         );
-        try!(self.writer.write_segment(SOF0, Some(&buf)));
+        self.writer.write_segment(SOF0, Some(&buf))?;
 
         assert_eq!(self.tables.len() / 64, 2);
         let numtables = if num_components == 1 { 1 } else { 2 };
 
         for (i, table) in self.tables.chunks(64).enumerate().take(numtables) {
             build_quantization_segment(&mut buf, 8, i as u8, table);
-            try!(self.writer.write_segment(DQT, Some(&buf)));
+            self.writer.write_segment(DQT, Some(&buf))?;
         }
 
         build_huffman_segment(
@@ -294,7 +295,7 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
             &STD_LUMA_DC_CODE_LENGTHS,
             &STD_LUMA_DC_VALUES,
         );
-        try!(self.writer.write_segment(DHT, Some(&buf)));
+        self.writer.write_segment(DHT, Some(&buf))?;
 
         build_huffman_segment(
             &mut buf,
@@ -303,7 +304,7 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
             &STD_LUMA_AC_CODE_LENGTHS,
             &STD_LUMA_AC_VALUES,
         );
-        try!(self.writer.write_segment(DHT, Some(&buf)));
+        self.writer.write_segment(DHT, Some(&buf))?;
 
         if num_components == 3 {
             build_huffman_segment(
@@ -313,7 +314,7 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
                 &STD_CHROMA_DC_CODE_LENGTHS,
                 &STD_CHROMA_DC_VALUES,
             );
-            try!(self.writer.write_segment(DHT, Some(&buf)));
+            self.writer.write_segment(DHT, Some(&buf))?;
 
             build_huffman_segment(
                 &mut buf,
@@ -322,29 +323,25 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
                 &STD_CHROMA_AC_CODE_LENGTHS,
                 &STD_CHROMA_AC_VALUES,
             );
-            try!(self.writer.write_segment(DHT, Some(&buf)));
+            self.writer.write_segment(DHT, Some(&buf))?;
         }
 
         build_scan_header(&mut buf, &self.components[..num_components]);
-        try!(self.writer.write_segment(SOS, Some(&buf)));
+        self.writer.write_segment(SOS, Some(&buf))?;
 
         match c {
-            Color::RGB => {
-                try!(self.encode_rgb(image, width as usize, height as usize, 3))
-            }
-            Color::RGBA => {
-                try!(self.encode_rgb(image, width as usize, height as usize, 4))
-            }
-            Color::Gray => {
-                try!(self.encode_gray(image, width as usize, height as usize, 1))
-            }
-            Color::GrayA => {
-                try!(self.encode_gray(image, width as usize, height as usize, 2))
-            },
+            Color::RGB =>
+                self.encode_rgb(image, width as usize, height as usize, 3)?,
+            Color::RGBA =>
+                self.encode_rgb(image, width as usize, height as usize, 4)?,
+            Color::Gray =>
+                self.encode_gray(image, width as usize, height as usize, 1)?,
+            Color::GrayA =>
+                self.encode_gray(image, width as usize, height as usize, 2)?,
         };
 
-        try!(self.writer.pad_byte());
-        try!(self.writer.write_segment(EOI, None));
+        self.writer.pad_byte()?;
+        self.writer.write_segment(EOI, None)?;
         Ok(())
     }
 
@@ -376,7 +373,7 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
                 let la = &*self.luma_actable;
                 let ld = &*self.luma_dctable;
 
-                y_dcprev = try!(self.writer.write_block(&dct_yblock, y_dcprev, ld, la));
+                y_dcprev = self.writer.write_block(&dct_yblock, y_dcprev, ld, la)?;
             }
         }
 
@@ -439,9 +436,9 @@ impl<'a, W: Write> JpegEncoder<'a, W> {
                 let cd = &*self.chroma_dctable;
                 let ca = &*self.chroma_actable;
 
-                y_dcprev = try!(self.writer.write_block(&dct_yblock, y_dcprev, ld, la));
-                cb_dcprev = try!(self.writer.write_block(&dct_cb_block, cb_dcprev, cd, ca));
-                cr_dcprev = try!(self.writer.write_block(&dct_cr_block, cr_dcprev, cd, ca));
+                y_dcprev = self.writer.write_block(&dct_yblock, y_dcprev, ld, la)?;
+                cb_dcprev = self.writer.write_block(&dct_cb_block, cb_dcprev, cd, ca)?;
+                cr_dcprev = self.writer.write_block(&dct_cr_block, cr_dcprev, cd, ca)?;
             }
         }
 

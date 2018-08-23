@@ -1,18 +1,18 @@
 // Markers
 // Baseline DCT
-pub static SOF0: u8 = 0xC0;
+pub const SOF0: u8 = 0xC0;
 // Huffman Tables
-pub static DHT: u8 = 0xC4;
+pub const DHT: u8 = 0xC4;
 // Start of Image (standalone)
-pub static SOI: u8 = 0xD8;
+pub const SOI: u8 = 0xD8;
 // End of image (standalone)
-pub static EOI: u8 = 0xD9;
+pub const EOI: u8 = 0xD9;
 // Start of Scan
-pub static SOS: u8 = 0xDA;
+pub const SOS: u8 = 0xDA;
 // Quantization Tables
-pub static DQT: u8 = 0xDB;
+pub const DQT: u8 = 0xDB;
 // Application segments start and end
-pub static APP0: u8 = 0xE0;
+pub const APP0: u8 = 0xE0;
 
 // section K.1
 // table K.1
@@ -97,15 +97,15 @@ pub static STD_CHROMA_AC_VALUES: [u8; 162] = [
     0xF9, 0xFA,
 ];
 
-pub static DCCLASS: u8 = 0;
-pub static ACCLASS: u8 = 1;
+pub const DCCLASS: u8 = 0;
+pub const ACCLASS: u8 = 1;
 
-pub static LUMADESTINATION: u8 = 0;
-pub static CHROMADESTINATION: u8 = 1;
+pub const LUMADESTINATION: u8 = 0;
+pub const CHROMADESTINATION: u8 = 1;
 
-pub static LUMAID: u8 = 1;
-pub static CHROMABLUEID: u8 = 2;
-pub static CHROMAREDID: u8 = 3;
+pub const LUMAID: u8 = 1;
+pub const CHROMABLUEID: u8 = 2;
+pub const CHROMAREDID: u8 = 3;
 
 /// The permutation of dct coefficients.
 #[cfg_attr(rustfmt, rustfmt_skip)]
