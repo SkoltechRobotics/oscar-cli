@@ -1,19 +1,20 @@
+use structopt::StructOpt;
 use std::path::PathBuf;
 
 #[derive(StructOpt)]
-#[structopt(name = "oscar",
-    about = "Tool for converting and previewing OS:Car project images")]
-pub enum OscarOpt {
+#[structopt(name = "convert",
+    about = "Tool for converting OS:Car project images")]
+pub enum Cli {
     /// Convert images from single camera
-    #[structopt(name = "convert_mono")]
-    Convert {
+    #[structopt(name = "mono")]
+    Mono {
         #[structopt(flatten)]
         opt: ConvertOpt
     },
     /// Join left and right images into a single one. Left image names will be
     /// used for output files.
-    #[structopt(name = "convert_stereo")]
-    ConvertStereo {
+    #[structopt(name = "stereo")]
+    Stereo {
         #[structopt(flatten)]
         opt: ConvertStereoOpt,
     },
@@ -100,6 +101,9 @@ pub struct FormatOpt {
     /// Apply bi-linear demosaicing
     #[structopt(short = "d")]
     pub demosaic: bool,
+    /// Apply histogram equalization filter
+    #[structopt(long = "histeq")]
+    pub histeq: bool,
     /// Format of output files. Supported formats: pnm, png, jpeg.
     #[structopt(short = "f", parse(try_from_str), default_value = "png")]
     pub format: Format,

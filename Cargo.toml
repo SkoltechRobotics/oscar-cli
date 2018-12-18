@@ -1,13 +1,17 @@
 [package]
-name = "oscar-cli"
+name = "oscar-utils"
 version = "0.1.0"
-authors = ["Artyom Pavlov <newpavlov@gmail.com>"]
+authors = ["newpavlov <newpavlov@gmail.com>"]
+edition = "2018"
 
 [dependencies]
-num_cpus = "1"
-pbr = "1"
-png = "0.12"
+png = 0.13"
+tempfile = "3"
+flif = "0.3"
 structopt = "0.2"
-flif = { git = "https://github.com/dgriffen/flif.rs" }
-memmap = "0.6"
+structopt-derive = "0.2"
+rayon = "1"
+# rayon support, see https://github.com/mitsuhiko/indicatif/pull/69
+indicatif = { git = "https://github.com/willcrichton/indicatif", features = ["with_rayon"] }
+memmap = "0.7"
 jpeg-encoder = { path = "jpeg-encoder" }

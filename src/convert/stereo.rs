@@ -1,23 +1,20 @@
 use std::io::Write;
-use std::sync::{Arc, Mutex, mpsc};
 use std::path::{Path, PathBuf};
-use std::{io, fs, cmp, thread, error};
+use std::{io, fs, cmp, error};
 
-use {num_cpus, pbr};
+use indicatif::{ProgressBar, ProgressStyle, ParallelProgressIterator};
+use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
 
-use opt::{ConvertStereoOpt, Format};
-use utils::{read_flif, save_stereo_img, get_timestamps, Timestamp};
+use super::cli::{ConvertStereoOpt, Format};
+use super::utils::{save_stereo_img, get_timestamps, Timestamp};
+use crate::load_frames::load_flif;
+use crate::{WIDTH, HEIGHT, PBAR_TEMPLATE};
 
 const FPS: u64 = 30;
 
 type Pair = (Option<Timestamp>, Option<Timestamp>);
 type StereoIndex = Vec<(usize, Pair)>;
 
-enum WorkerMessage {
-    Ok(Pair),
-    Err(Pair, io::Error),
-    Done,
-}
 
 fn to_path(dir: &Path, ts: Timestamp) -> PathBuf {
     let mut path = dir.to_path_buf();
@@ -109,52 +106,9 @@ fn construct_index(opt: &ConvertStereoOpt) -> io::Result<StereoIndex> {
 /// returns empty image if `ts` is None
 fn read_flif2(ts: Option<Timestamp>, dir: &Path) -> io::Result<Box<[u8]>> {
     match ts {
-        Some(ts) => read_flif(&to_path(dir, ts)),
-        None => Ok(vec![0; 2448*2048].into_boxed_slice()),
+        Some(ts) => load_flif(&to_path(dir, ts)),
+        None => Ok(vec![0; WIDTH*HEIGHT].into_boxed_slice()),
     }
-}
-
-fn worker(
-    files: &Arc<Mutex<StereoIndex>>, chan: &mpsc::Sender<WorkerMessage>,
-    opt: ConvertStereoOpt,
-) {
-    let files = files.clone();
-    let chan = chan.clone();
-    thread::spawn(move|| {
-        let mut left = opt.input.clone();
-        left.push("left");
-        let mut right = opt.input.clone();
-        right.push("right");
-        loop {
-            let (n, pair) = match files.lock().expect("mutex failure").pop() {
-                Some(path) => path,
-                None => break,
-            };
-            let skip = match pair {
-                (Some(_), Some(_)) => false,
-                (None,  None) => opt.ignore_empty,
-                _ => opt.ignore_partial,
-            };
-            if skip { break }
-
-            let res = read_flif2(pair.0, &left)
-                .and_then(|left| Ok((left, read_flif2(pair.1, &right)?)))
-                .and_then(|(left_img, right_img)| {
-                    let file_name = format!("{:#06}", n);
-                    save_stereo_img(
-                        &file_name, left_img, right_img,
-                        &opt.format, &opt.output, 2448, 2048,
-                    )
-                });
-
-            let msg = match res {
-                Ok(()) => WorkerMessage::Ok(pair),
-                Err(err) => WorkerMessage::Err(pair, err),
-            };
-            chan.send(msg).expect("channel failure");
-        }
-        chan.send(WorkerMessage::Done).expect("channel failure");
-    });
 }
 
 /// Save index data to TSV file
@@ -197,34 +151,39 @@ pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<error::Error>> {
     let n = index.len();
     index.truncate(n - opt.skip as usize);
 
-    let count = index.len() as u64;
-    let index = Arc::new(Mutex::new(index));
-    let (sender, receiver) = mpsc::channel();
-    let mut workers = opt.workers.unwrap_or_else(|| num_cpus::get() as u8);
+    let bar = ProgressBar::new(index.len() as u64);
+    bar.set_style(ProgressStyle::default_bar().template(PBAR_TEMPLATE));
+    index.par_iter()
+        .progress_with(bar)
+        .for_each(|(n, pair,)| {
+            let skip = match pair {
+                (Some(_), Some(_)) => false,
+                (None,  None) => opt.ignore_empty,
+                _ => opt.ignore_partial,
+            };
+            if skip { return; }
 
-    for _ in 0..workers {
-        worker(&index, &sender, opt.clone());
-    }
-    let mut pb = pbr::ProgressBar::new(count);
-    let mut counter = 0;
-    loop {
-        match receiver.recv() {
-            Ok(WorkerMessage::Ok(_path)) => {
-                counter = pb.inc();
-            },
-            Ok(WorkerMessage::Err(pair, err)) => {
-                counter = pb.inc();
-                eprintln!("error [{:?}] {}", pair ,err);
-            },
-            Ok(WorkerMessage::Done) => {
-                workers -= 1;
-                if workers == 0 { break; }
-            },
-            Err(_) => break,
-        }
-    }
-    assert_eq!(counter, count, "not all messages processed");
-    pb.finish_print("Completed");
+            // TODO: optimize
+            let mut left = opt.input.clone();
+            left.push("left");
+            let mut right = opt.input.clone();
+            right.push("right");
+
+            let res = read_flif2(pair.0, &left)
+                .and_then(|left| Ok((left, read_flif2(pair.1, &right)?)))
+                .and_then(|(left_img, right_img)| {
+                    let file_name = format!("{:#06}", n);
+                    save_stereo_img(
+                        &file_name, left_img, right_img,
+                        &opt.format, &opt.output,
+                        WIDTH as u32, HEIGHT as u32,
+                    )
+                });
+
+            if let Err(err) = res {
+                println!("Error: {:?} {}", pair, err);
+            }
+        });
 
     Ok(())
 }

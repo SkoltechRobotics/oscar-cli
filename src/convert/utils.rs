@@ -2,37 +2,12 @@ use std::path::Path;
 use std::{io, fs};
 use std::io::Write;
 
-use {bayer, png};
 use png::HasParameters;
-use opt::{Format, FormatOpt};
 use jpeg_encoder::JpegEncoder;
 use jpeg_encoder;
 
-#[cfg(feature = "libflif")]
-pub use flif::read_flif;
-
-#[cfg(not(feature = "libflif"))]
-pub fn read_flif(path: &Path) -> io::Result<Box<[u8]>> {
-    use memmap::Mmap;
-    use flif;
-
-    let mmap = unsafe { Mmap::map(&fs::File::open(path)?)? };
-    let image = flif::Flif::decode(mmap.as_ref())
-        .map_err(|err| match err {
-            flif::Error::Io(err) => err,
-            err => io::Error::new(io::ErrorKind::InvalidData, err)
-        })?;
-    let header = image.info().header;
-    match header {
-        flif::components::Header {
-            width: 2448, height: 2048, num_frames: 1, interlaced: false,
-            bytes_per_channel: flif::components::BytesPerChannel::One,
-            channels: flif::colors::ColorSpace::Monochrome,
-        } => Ok(image.into_raw()),
-        _ => Err(io::Error::new(io::ErrorKind::InvalidData,
-            format!("unexpected image properites: {:?}", header))),
-    }
-}
+use crate::bayer;
+use super::cli::{Format, FormatOpt};
 
 pub fn save_img(
     name: &str, mut data: Box<[u8]>, opt: &FormatOpt, out_dir: &Path,
@@ -53,6 +28,7 @@ pub fn save_img(
         width /= opt.scale as u32;
         height /= opt.scale as u32;
     }
+    if opt.histeq { histeq(&mut data); }
     let mut path = out_dir.to_path_buf();
     path.push(name);
     let flag = path.set_extension(match opt.format {
@@ -89,7 +65,10 @@ pub fn save_stereo_img(
         width /= opt.scale as u32;
         height /= opt.scale as u32;
     }
-    let data = concat_images(left, right, width as usize, height as usize, is_color);
+    let mut  data = concat_images(
+        left, right, width as usize, height as usize, is_color
+    );
+    if opt.histeq { histeq(&mut data); }
 
     let mut path = out_dir.to_path_buf();
     path.push(name);
@@ -113,14 +92,45 @@ fn concat_images(
     assert_eq!(left.len(), w*h);
     assert_eq!(right.len(), w*h);
     let mut out = vec![0; 2*w*h].into_boxed_slice();
-    for ((l, r), o) in left.exact_chunks(w)
-        .zip(right.exact_chunks(w))
-        .zip(out.exact_chunks_mut(2*w))
+    for ((l, r), o) in left.chunks(w)
+        .zip(right.chunks(w))
+        .zip(out.chunks_mut(2*w))
     {
         o[..w].copy_from_slice(l);
         o[w..].copy_from_slice(r);
     }
     out
+}
+
+fn histeq(data: &mut [u8]) {
+    assert_eq!(data.len() % 3, 0);
+    let mut hist = [0i32; 256];
+    // build histogram
+    for pixel in data.chunks_mut(3) {
+        let (r, g, b) = (pixel[0], pixel[1], pixel[2]);
+        let y = ((r as usize) + 2*(b as usize) + (g as usize))/4;
+        // guaranteed to be in range 0..255
+        unsafe {
+            *(hist.get_unchecked_mut(y)) += 1;
+        }
+    }
+    // accumulate histogram
+    let mut sum = 0i32;
+    for val in hist.iter_mut() {
+        sum += *val;
+        *val = sum;
+    }
+    // normalize histogram
+    let max_val = hist[255]/255;
+    let mut map = [0u8; 256];
+    for (v, m) in hist.iter().zip(map.iter_mut()) {
+        *m = (*v/max_val) as u8;
+    }
+
+    // map pixels
+    for val in data.iter_mut() {
+        *val = map[*val as usize];
+    }
 }
 
 fn save_pnm(
@@ -138,7 +148,6 @@ fn save_pnm(
     file.write_all(data)?;
     Ok(())
 }
-
 
 fn save_png(
     path: &Path, data: &[u8], width: u32, height: u32, is_color: bool,
@@ -188,9 +197,9 @@ fn resize(data: &[u8], width: u32, height: u32, scale: u8) -> Box<[u8]> {
     let h = (height as usize)/(scale as usize);
     let mut buf = vec![0u16; 3*w*h];
 
-    for (y, row) in data.exact_chunks(3*width as usize).enumerate() {
+    for (y, row) in data.chunks(3*width as usize).enumerate() {
         let i0 = 3*w*(y>>factor);
-        for (x, pix) in row.exact_chunks(3).enumerate() {
+        for (x, pix) in row.chunks(3).enumerate() {
             let idx = i0 + 3*(x>>factor);
             unsafe {
                 *(buf.get_unchecked_mut(idx + 0)) += pix[0] as u16;
