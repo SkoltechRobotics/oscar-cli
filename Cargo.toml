@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-png = 0.13"
+png = "0.13"
 tempfile = "3"
 flif = "0.3"
 structopt = "0.2"
