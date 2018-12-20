@@ -1,7 +1,11 @@
 use structopt::StructOpt;
 
-use oscar_utils::convert::cli::Cli;
-use oscar_utils::convert::{stereo, mono};
+mod cli;
+mod utils;
+mod mono;
+mod stereo;
+
+use self::cli::Cli;
 
 fn main() {
     let opt = Cli::from_args();

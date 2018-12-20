@@ -6,7 +6,7 @@ use png::HasParameters;
 use jpeg_encoder::JpegEncoder;
 use jpeg_encoder;
 
-use crate::bayer;
+use oscar_utils::bggr_bayer;
 use super::cli::{Format, FormatOpt};
 
 pub fn save_img(
@@ -15,7 +15,7 @@ pub fn save_img(
 ) -> io::Result<()> {
     assert_eq!(data.len(), (width*height) as usize);
     let is_color = if opt.demosaic {
-        data = bayer::bggr_bayer(&data, width as usize, height as usize);
+        data = bggr_bayer(&data, width as usize, height as usize);
         true
     } else {
         false
@@ -51,8 +51,8 @@ pub fn save_stereo_img(
     assert_eq!(left.len(), (width*height) as usize);
     assert_eq!(right.len(), (width*height) as usize);
     let is_color = if opt.demosaic {
-        left = bayer::bggr_bayer(&left, width as usize, height as usize);
-        right = bayer::bggr_bayer(&right, width as usize, height as usize);
+        left = bggr_bayer(&left, width as usize, height as usize);
+        right = bggr_bayer(&right, width as usize, height as usize);
         true
     } else {
         false

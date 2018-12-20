@@ -7,8 +7,8 @@ use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
 
 use super::cli::{ConvertStereoOpt, Format};
 use super::utils::{save_stereo_img, get_timestamps, Timestamp};
-use crate::load_frames::load_flif;
-use crate::{WIDTH, HEIGHT, PBAR_TEMPLATE};
+use oscar_utils::load_frames::load_flif;
+use oscar_utils::{WIDTH, HEIGHT, PBAR_TEMPLATE};
 
 const FPS: u64 = 30;
 

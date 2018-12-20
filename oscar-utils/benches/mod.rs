@@ -19,6 +19,7 @@ fn bench_bggr_bayer(b: &mut test::Bencher) {
     });
 }
 
+
 #[bench]
 fn bench_raw2rgba(b: &mut test::Bencher) {
     let src = get_buf();

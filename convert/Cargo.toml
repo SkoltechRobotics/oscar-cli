@@ -1,0 +1,14 @@
+[package]
+name = "convert"
+version = "0.1.0"
+authors = ["newpavlov <newpavlov@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+png = "0.13"
+structopt = "0.2"
+structopt-derive = "0.2"
+rayon = "1"
+indicatif = { version = "0.10", features = ["with_rayon"] }
+oscar-utils = { path = "../oscar-utils" }
+jpeg-encoder = { path = "../jpeg-encoder" }

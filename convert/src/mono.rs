@@ -7,8 +7,8 @@ use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
 
 use super::cli::{ConvertOpt, Format};
 use super::utils::{save_img, get_timestamp, Timestamp};
-use crate::load_frames::load_flif;
-use crate::{WIDTH, HEIGHT, PBAR_TEMPLATE};
+use oscar_utils::load_frames::load_flif;
+use oscar_utils::{WIDTH, HEIGHT, PBAR_TEMPLATE};
 
 type MonoIndex = Vec<(usize, PathBuf, Timestamp)>;
 
