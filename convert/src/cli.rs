@@ -58,11 +58,8 @@ fn parse_scale(s: &str) -> Result<u8, String> {
 pub struct ConvertOpt {
     #[structopt(flatten)]
     pub format: FormatOpt,
-    /// Number of threads to spawn [default: number of CPU cores]
-    #[structopt(short = "w")]
-    pub workers: Option<u8>,
     /// Skip first N images
-    #[structopt(long = "skip", default_value = "0")]
+    #[structopt(short = "n", default_value = "0")]
     pub skip: u32,
     /// Input directory
     #[structopt(parse(from_os_str))]
@@ -76,9 +73,6 @@ pub struct ConvertOpt {
 pub struct ConvertStereoOpt {
     #[structopt(flatten)]
     pub format: FormatOpt,
-    /// Number of threads to spawn [default: number of CPU cores]
-    #[structopt(short = "w")]
-    pub workers: Option<u8>,
     /// Ignore partial pairs (with only left ot right image)
     #[structopt(long = "ignore_partial")]
     pub ignore_partial: bool,
@@ -86,7 +80,7 @@ pub struct ConvertStereoOpt {
     #[structopt(long = "ignore_empty")]
     pub ignore_empty: bool,
     /// Skip first N pairs (including partial and full)
-    #[structopt(long = "skip", default_value = "0")]
+    #[structopt(short = "n", default_value = "0")]
     pub skip: u32,
     /// Input directory
     #[structopt(parse(from_os_str))]
@@ -111,7 +105,7 @@ pub struct FormatOpt {
     /// demosaicing. Accepted values: 1, 2, 4, 8, 16.
     #[structopt(short = "s", default_value = "1", parse(try_from_str="parse_scale"))]
     pub scale: u8,
-    /// Encoding quality (usable only with format equal to jpeg)
+    /// Encoding quality (usable only with the format equal to jpeg)
     #[structopt(short = "q", default_value = "90")]
     pub quality: u8,
 }
