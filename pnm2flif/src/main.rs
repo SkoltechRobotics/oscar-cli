@@ -32,7 +32,6 @@ const PAM_HEADER: &[u8] = b"\
     ENDHDR\n\
 ";
 
-// TODO: replace asserts with io::Error
 pub fn convert_pnm2flif(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     let src = load_raw_pnm(src_path)?;
     let mut rgba_buf = vec![0u8; WIDTH*HEIGHT];
@@ -54,7 +53,10 @@ pub fn convert_pnm2flif(src_path: &Path, dst_path: &Path) -> io::Result<()> {
         .stdout(Stdio::null())
         .status()
         .expect("failed to execute process");
-    assert!(status.success());
+    if !status.success() {
+        let err_msg = format!("flif failure: {}", src_path.display());
+        Err(io::Error::new(io::ErrorKind::Other, err_msg))?;
+    }
     file.close()?;
     Ok(())
 }
@@ -66,7 +68,7 @@ fn main() -> io::Result<()> {
     let pnm_ext = std::ffi::OsStr::new("pnm");
 
     let mut tasks: Vec<(PathBuf, PathBuf)> = Default::default();
-    for entry in std::fs::read_dir(args.src_dir)? {
+    for entry in std::fs::read_dir(&args.src_dir)? {
         let entry = entry?;
         let src_path = entry.path();
         let ft = entry.file_type()?;
@@ -77,6 +79,7 @@ fn main() -> io::Result<()> {
         tasks.push((src_path, dst_path));
     }
 
+    println!("Processing: {}", args.src_dir.display());
     let bar = ProgressBar::new(tasks.len() as u64);
     bar.set_style(ProgressStyle::default_bar().template(PBAR_TEMPLATE));
     tasks.par_iter()
