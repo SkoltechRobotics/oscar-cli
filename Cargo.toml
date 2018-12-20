@@ -1,5 +1,5 @@
 [workspace]
-members = ["convert", "pnm2flif", "check", "jpeg-encoder", "oscar-utils"]
+members = ["convert", "pnm2flif", "jpeg-encoder", "oscar-utils"]
 
 [patch.crates-io]
 # rayon support, see https://github.com/mitsuhiko/indicatif/pull/69

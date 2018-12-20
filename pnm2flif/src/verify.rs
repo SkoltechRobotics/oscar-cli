@@ -1,24 +1,12 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::io;
 
-use structopt::StructOpt;
 use indicatif::{ProgressBar, ProgressStyle, ParallelProgressIterator};
 use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
 
 use oscar_utils::PBAR_TEMPLATE;
 use oscar_utils::conversions::raw_flip;
 use oscar_utils::load_frames::{load_raw_pnm, load_flif};
-
-#[derive(StructOpt)]
-#[structopt(
-    name = "check",
-    about = "Checks that raw Bayer PNM and RGBA FLIF contain the same data")]
-pub(crate) struct Cli {
-    #[structopt(parse(from_os_str))]
-    pnm_dir: PathBuf,
-    #[structopt(parse(from_os_str))]
-    flif_dir: PathBuf,
-}
 
 fn get_filenames(dir: &Path, ext: &str) -> io::Result<Vec<String>> {
     let ext = std::ffi::OsStr::new(ext);
@@ -50,8 +38,7 @@ fn compare(fname: &str, flif_dir: &Path, pnm_dir: &Path) -> io::Result<bool> {
     Ok(&pnm_frame[..] == &flif_frame[..])
 }
 
-fn main() -> io::Result<()> {
-    let args = Cli::from_args();
+pub(crate) fn verify(args: crate::Cli) -> io::Result<()> {
     let flifs = get_filenames(&args.flif_dir, "flif")?;
     let pnms = get_filenames(&args.pnm_dir, "pnm")?;
     if flifs != pnms {
