@@ -39,6 +39,9 @@ fn compare(fname: &str, flif_dir: &Path, pnm_dir: &Path) -> io::Result<bool> {
 }
 
 pub(crate) fn verify(args: crate::Cli) -> io::Result<()> {
+    println!("Verification: {} {}",
+        args.pnm_dir.display(), args.flif_dir.display());
+
     let flifs = get_filenames(&args.flif_dir, "flif")?;
     let pnms = get_filenames(&args.pnm_dir, "pnm")?;
     if flifs != pnms {

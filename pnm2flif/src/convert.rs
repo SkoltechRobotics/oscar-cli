@@ -50,6 +50,9 @@ fn convert_pnm2flif(src_path: &Path, dst_path: &Path) -> io::Result<()> {
 }
 
 pub(crate) fn convert(args: crate::Cli) -> io::Result<()> {
+    println!("Conversion: {} {}",
+        args.pnm_dir.display(), args.flif_dir.display());
+
     fs::create_dir_all(&args.flif_dir)?;
     let pnm_ext = std::ffi::OsStr::new("pnm");
 
@@ -65,7 +68,6 @@ pub(crate) fn convert(args: crate::Cli) -> io::Result<()> {
         tasks.push((src_path, dst_path));
     }
 
-    println!("Processing: {}", args.pnm_dir.display());
     let bar = ProgressBar::new(tasks.len() as u64);
     bar.set_style(ProgressStyle::default_bar().template(PBAR_TEMPLATE));
     tasks.par_iter()
