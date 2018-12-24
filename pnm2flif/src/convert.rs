@@ -10,15 +10,7 @@ use oscar_utils::{PBAR_TEMPLATE, WIDTH, HEIGHT};
 use oscar_utils::load_frames::load_raw_pnm;
 use oscar_utils::conversions::raw2rgba_flip;
 
-const PAM_HEADER: &[u8] = b"\
-    P7\n\
-    WIDTH 1224\n\
-    HEIGHT 1024\n\
-    DEPTH 4\n\
-    MAXVAL 255\n\
-    TUPLTYPE RGB_ALPHA\n\
-    ENDHDR\n\
-";
+use super::PAM_HEADER;
 
 fn convert_pnm2flif(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     let src = load_raw_pnm(src_path)?;
