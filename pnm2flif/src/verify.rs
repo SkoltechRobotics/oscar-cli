@@ -38,6 +38,7 @@ fn cpp_flif_load(path: &Path) -> io::Result<Vec<u8>> {
 
     let status = Command::new("flif")
         .arg("-d")
+        .arg("--overwrite")
         .arg(path)
         .arg(f.path())
         .stderr(Stdio::null())
