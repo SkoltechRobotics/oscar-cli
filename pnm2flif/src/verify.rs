@@ -80,10 +80,14 @@ fn compare(fname: &str, flif_dir: &Path, pnm_dir: &Path) -> io::Result<CompResul
     let mut cpp_flif_frame = cpp_flif_load(&flif_path)?;
     raw_flip(&mut cpp_flif_frame);
 
-    Ok(CompResult {
+    let res = CompResult {
         cpp: &pnm_frame[..] == &cpp_flif_frame[..],
         rs: &pnm_frame[..] == &rs_flif_frame[..],
-    })
+    };
+    if !res.cpp || !res.rs {
+        println!("{} {:?}", fname, res);
+    }
+    Ok(res)
 }
 
 pub(crate) fn verify(args: crate::Cli) -> io::Result<()> {
@@ -112,7 +116,7 @@ pub(crate) fn verify(args: crate::Cli) -> io::Result<()> {
 
     if res.len() != 0 {
         println!("{:?} frame(s) are not equal to each other.", res.len());
-        for (res, fname) in res { println!("{}\t{:?}", fname, res); }
+        //for (res, fname) in res { println!("{}\t{:?}", fname, res); }
     }
 
     Ok(())
