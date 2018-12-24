@@ -5,8 +5,8 @@ use std::process::{Command, Stdio};
 use indicatif::{ProgressBar, ProgressStyle, ParallelProgressIterator};
 use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
 
-use oscar_utils::PBAR_TEMPLATE;
-use oscar_utils::conversions::raw_flip;
+use oscar_utils::{PBAR_TEMPLATE, WIDTH, HEIGHT};
+use oscar_utils::conversions::{raw_flip, rgba2raw};
 use oscar_utils::load_frames::{load_raw_pnm, load_flif};
 
 use super::PAM_HEADER;
@@ -56,7 +56,9 @@ fn cpp_flif_load(path: &Path) -> io::Result<Vec<u8>> {
         let err_msg = format!("unexpected header: {}", path.display());
         Err(io::Error::new(io::ErrorKind::Other, err_msg))?;
     }
-    Ok(buf[n..].to_vec())
+    let mut raw = vec![0u8; WIDTH*HEIGHT];
+    rgba2raw(&buf[n..], &mut raw);
+    Ok(raw)
 }
 
 #[derive(Debug, Copy, Clone)]
