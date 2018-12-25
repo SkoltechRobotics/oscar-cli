@@ -23,7 +23,7 @@ fn convert_pnm2flif(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     file.flush()?;
 
     let status = Command::new("flif")
-        .arg("-eKNB")
+        .arg("-eKNBC")
         .arg("-E100")
         .arg("-Q100")
         .arg("--overwrite")
