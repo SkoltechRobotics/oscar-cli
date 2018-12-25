@@ -85,7 +85,7 @@ fn compare(fname: &str, flif_dir: &Path, pnm_dir: &Path) -> io::Result<CompResul
         rs: &pnm_frame[..] == &rs_flif_frame[..],
     };
     if !res.cpp || !res.rs {
-        println!("{} {:?}", fname, res);
+        println!("{} {:?}\n", fname, res);
     }
     Ok(res)
 }
