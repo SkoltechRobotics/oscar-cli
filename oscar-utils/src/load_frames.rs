@@ -4,11 +4,13 @@ use std::io;
 
 use super::{WIDTH, HEIGHT};
 
+const PNM_HEADER: &[u8] = b"P5\n2448 2048\n255\n";
+
 pub fn load_raw_pnm(path: &Path) -> io::Result<Box<[u8]>> {
     let mmap = unsafe { memmap::Mmap::map(&File::open(path)?)? };
     let (header, image) = mmap.split_at(17);
 
-    if header != b"P5\n2448 2048\n255\n" || image.len() == WIDTH*HEIGHT {
+    if header != PNM_HEADER || image.len() != WIDTH*HEIGHT {
         Err(io::Error::new(io::ErrorKind::InvalidData,
             "invalid PNM frame".to_string()))
     } else {
