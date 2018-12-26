@@ -1,6 +1,6 @@
-use std::path::Path;
-use std::io::{self, Read};
 use std::process::{Command, Stdio};
+use std::path::Path;
+use std::io;
 
 use indicatif::{ProgressBar, ProgressStyle, ParallelProgressIterator};
 use rayon::iter::{ParallelIterator, IntoParallelRefIterator};
@@ -31,8 +31,8 @@ fn get_filenames(dir: &Path, ext: &str) -> io::Result<Vec<String>> {
 }
 
 
-fn cpp_flif_load(path: &Path) -> io::Result<Vec<u8>> {
-    let mut f = tempfile::Builder::new()
+fn cpp_flif_load(path: &Path) -> io::Result<Box<[u8]>> {
+    let f = tempfile::Builder::new()
         .suffix(".pam")
         .tempfile()?;
 
@@ -49,16 +49,15 @@ fn cpp_flif_load(path: &Path) -> io::Result<Vec<u8>> {
         let err_msg = format!("flif failure: {}", path.display());
         Err(io::Error::new(io::ErrorKind::Other, err_msg))?;
     }
-    let mut buf = vec![];
-    f.read_to_end(&mut buf)?;
-    let n = PAM_HEADER.len();
-    if &buf[..n] != PAM_HEADER {
-        let err_msg = format!("unexpected header: {}", path.display());
-        Err(io::Error::new(io::ErrorKind::Other, err_msg))?;
+    let mmap = unsafe { memmap::Mmap::map(f.as_file())? };
+    let (header, image) = mmap.split_at(PAM_HEADER.len());
+    if header != PAM_HEADER || image.len() != WIDTH*HEIGHT {
+        Err(io::Error::new(io::ErrorKind::Other,
+            "invalid PAM frame".to_string()))?;
     }
     let mut raw = vec![0u8; WIDTH*HEIGHT];
-    rgba2raw(&buf[n..], &mut raw);
-    Ok(raw)
+    rgba2raw(image, &mut raw);
+    Ok(raw.into_boxed_slice())
 }
 
 #[derive(Debug, Copy, Clone)]

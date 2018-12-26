@@ -374,6 +374,7 @@ name = "pnm2flif"
 version = "0.1.0"
 dependencies = [
  "indicatif 0.10.1 (git+https://github.com/willcrichton/indicatif?rev=317f7cae)",
+ "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "oscar-utils 0.1.0",
  "rayon 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",

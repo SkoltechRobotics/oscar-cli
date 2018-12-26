@@ -1,17 +1,19 @@
 use std::path::Path;
 use std::fs::File;
-use std::io::{self, Read};
+use std::io;
 
 use super::{WIDTH, HEIGHT};
 
 pub fn load_raw_pnm(path: &Path) -> io::Result<Box<[u8]>> {
-    let mut f = File::open(path)?;
-    let mut buf = [0; 17];
-    f.read_exact(&mut buf)?;
-    assert_eq!(&buf, b"P5\n2448 2048\n255\n");
-    let mut buf = vec![0u8; WIDTH*HEIGHT];
-    f.read_exact(&mut buf)?;
-    Ok(buf.into_boxed_slice())
+    let mmap = unsafe { memmap::Mmap::map(&File::open(path)?)? };
+    let (header, image) = mmap.split_at(17);
+
+    if header != b"P5\n2448 2048\n255\n" || image.len() == WIDTH*HEIGHT {
+        Err(io::Error::new(io::ErrorKind::InvalidData,
+            "invalid PNM frame".to_string()))
+    } else {
+        Ok(image.to_vec().into_boxed_slice())
+    }
 }
 
 pub fn load_flif(path: &Path) -> io::Result<Box<[u8]>> {
