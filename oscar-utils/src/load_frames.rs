@@ -31,7 +31,7 @@ pub fn load_flif(path: &Path) -> io::Result<Box<[u8]>> {
             num_frames: 1, interlaced: false,
             bytes_per_channel: flif::components::BytesPerChannel::One,
             channels: flif::colors::ColorSpace::RGBA,
-        } if width == wt && height == ht => image.get_raw_pixels(),
+        } if width == wt && height == ht => image.into_raw(),
         _ => Err(io::Error::new(io::ErrorKind::InvalidData,
             format!("unexpected image properites: {:?}", header)))?,
     };

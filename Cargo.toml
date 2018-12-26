@@ -4,3 +4,5 @@ members = ["convert", "pnm2flif", "jpeg-encoder", "oscar-utils"]
 [patch.crates-io]
 # rayon support, see https://github.com/mitsuhiko/indicatif/pull/69
 indicatif = { git="https://github.com/willcrichton/indicatif", rev="317f7cae" }
+# see https://github.com/dgriffen/flif.rs/pull/57
+flif = { git ="https://github.com/newpavlov/flif.rs", branch="rgba_fix"}
