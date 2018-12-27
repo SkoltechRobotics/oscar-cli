@@ -85,7 +85,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
                     )
                 });
             if let Err(err) = res {
-                println!("Error: {:?} {}", path, err);
+                println!("Error: {:?} {}\n", path, err);
             }
         });
 

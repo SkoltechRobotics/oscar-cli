@@ -181,7 +181,7 @@ pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<error::Error>> {
                 });
 
             if let Err(err) = res {
-                println!("Error: {:?} {}", pair, err);
+                println!("Error: {:?} {}\n", pair, err);
             }
         });
 
