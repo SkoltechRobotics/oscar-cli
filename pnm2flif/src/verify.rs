@@ -113,9 +113,10 @@ pub(crate) fn verify(args: crate::Cli) -> io::Result<()> {
         .filter(|(res, _)| !res.cpp || !res.rs)
         .collect();
 
-    if res.len() != 0 {
-        println!("{:?} frame(s) are not equal to each other.", res.len());
-        //for (res, fname) in res { println!("{}\t{:?}", fname, res); }
+    if res.len() == 0 {
+        println!("Done. No discrepancies detected.");
+    } else {
+        println!("Done. Discrepancies detected: {:?}", res.len());
     }
 
     Ok(())
