@@ -64,9 +64,9 @@ pub(crate) fn convert(args: crate::Cli) -> io::Result<()> {
     bar.set_style(ProgressStyle::default_bar().template(PBAR_TEMPLATE));
     tasks.par_iter()
         .progress_with(bar)
-        .for_each(|(src_path, dst_path)| {
-            convert_pnm2flif(src_path, dst_path).expect("conversion failed");
-        });
+        .try_for_each(|(src_path, dst_path)| {
+            convert_pnm2flif(src_path, dst_path)
+        })?;
 
     Ok(())
 }
