@@ -51,7 +51,7 @@ fn save_index(index: &MonoIndex, dir: &Path) -> io::Result<()>{
     Ok(())
 }
 
-pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
+pub fn convert(opt: ConvertOpt) -> Result<(), Box<dyn error::Error>> {
     if !opt.format.demosaic {
         if opt.format.scale != 1 {
             Err("can't downscale image without demosaicing")?

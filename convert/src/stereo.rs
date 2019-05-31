@@ -136,7 +136,7 @@ fn save_index(index: &StereoIndex, dir: &Path) -> io::Result<()>{
     Ok(())
 }
 
-pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<error::Error>> {
+pub fn convert(opt: ConvertStereoOpt) -> Result<(), Box<dyn error::Error>> {
     if !opt.format.demosaic && opt.format.scale != 1 {
         Err("can't downscale image without demosaicing")?
     }

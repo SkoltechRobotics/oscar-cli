@@ -44,7 +44,7 @@ fn save_index(index: Vec<(usize, PathBuf)>, dir: &Path) -> io::Result<()>{
     Ok(())
 }
 
-pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
+pub fn convert(opt: ConvertOpt) -> Result<(), Box<dyn error::Error>> {
     if !opt.format.demosaic {
         if opt.format.scale != 1 {
             Err("can't downscale image without demosaicing")?
@@ -76,7 +76,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
     let num = num_cpus::get();
     let (frames_in, frames_out) = crossbeam_channel::bounded(2*num);
 
-    let handles: Vec<std::thread::JoinHandle<()>> = (0..num)
+    let handles: Vec<_> = (0..num)
         .map(|_| {
             let rx = frames_out.clone();
             let opt = opt.clone();
