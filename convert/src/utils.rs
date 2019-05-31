@@ -229,9 +229,6 @@ fn invalid_input(msg: &str, path: &Path) -> io::Error {
 }
 
 pub fn get_timestamp(path: &Path) -> io::Result<Timestamp> {
-    if !path.is_file() {
-        Err(invalid_input("expected file, but got dir", path))?;
-    }
     match path.extension() {
         Some(ext) if ext == "flif" => (),
         _ => Err(invalid_input("expected file with flif extension", path))?,

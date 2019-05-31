@@ -61,9 +61,8 @@ pub struct ConvertOpt {
     /// Skip first N images
     #[structopt(short = "n", default_value = "0")]
     pub skip: u32,
-    /// Input directory
-    #[structopt(parse(from_os_str))]
-    pub input: PathBuf,
+    /// Input directory with FLIF images, path or HTTP link to TAR
+    pub input: String,
     /// Output directory
     #[structopt(parse(from_os_str))]
     pub output: PathBuf,

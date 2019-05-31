@@ -9,6 +9,10 @@ png = "0.13"
 structopt = "0.2"
 structopt-derive = "0.2"
 rayon = "1"
+crossbeam-channel = "0.3"
+num_cpus = "1"
 indicatif = { version = "0.10", features = ["with_rayon"] }
 oscar-utils = { path = "../oscar-utils" }
 jpeg-encoder = { path = "../jpeg-encoder" }
+tar = "0.4"
+reqwest = { version = "0.9", default-features=false }

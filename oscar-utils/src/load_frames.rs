@@ -20,7 +20,11 @@ pub fn load_raw_pnm(path: &Path) -> io::Result<Box<[u8]>> {
 
 pub fn load_flif(path: &Path) -> io::Result<Box<[u8]>> {
     let mmap = unsafe { memmap::Mmap::map(&File::open(path)?)? };
-    let image = flif::Flif::decode(mmap.as_ref())
+    decode_flif(mmap.as_ref())
+}
+
+pub fn decode_flif(data: &[u8]) -> io::Result<Box<[u8]>> {
+    let image = flif::Flif::decode(data)
         .map_err(|err| match err {
             flif::Error::Io(err) => err,
             err => io::Error::new(io::ErrorKind::InvalidData, err)

@@ -12,7 +12,7 @@ use oscar_utils::{WIDTH, HEIGHT, PBAR_TEMPLATE};
 
 type MonoIndex = Vec<(usize, PathBuf, Timestamp)>;
 
-fn construct_index(dir_path: &Path) -> io::Result<MonoIndex> {
+fn construct_index(dir_path: &str) -> io::Result<MonoIndex> {
     print!("Building list of images... ");
     io::stdout().flush()?;
     let mut index = fs::read_dir(dir_path)?
@@ -63,7 +63,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
             Err("can't apply histogram equalization without demosaicing")?
         }
     }
-    println!("Processing: {}", opt.input.display());
+    println!("Processing: {}", opt.input);
     let mut index = construct_index(&opt.input)?;
     fs::create_dir_all(&opt.output)?;
     save_index(&index, &opt.output)?;
@@ -85,7 +85,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<error::Error>> {
                     )
                 });
             if let Err(err) = res {
-                println!("Error: {:?} {}\n", path, err);
+                eprintln!("Error: {:?} {}\n", path, err);
             }
         });
 
