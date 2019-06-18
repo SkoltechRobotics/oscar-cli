@@ -38,7 +38,7 @@ fn save_index(index: &MonoIndex, dir: &Path) -> io::Result<()>{
     index_path.push("index.tsv");
     let mut index_file = io::BufWriter::new(fs::File::create(index_path)?);
     index_file.write_all(
-        b"N\tUNIX time, ms\tOS time, ms\tPrevious frame dt, ms\n"
+        b"N\tUNIX time, us\tOS time, us\tPrevious frame dt, us\n"
     )?;
 
     let i = index.len() - 1;

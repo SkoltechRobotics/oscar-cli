@@ -117,9 +117,9 @@ fn save_index(index: &StereoIndex, dir: &Path) -> io::Result<()>{
     index_path.push("index.tsv");
     let mut index_file = io::BufWriter::new(fs::File::create(index_path)?);
     index_file.write_all(
-        b"Pair number\tLeft frame UNIX time, ms\tRight frame UNIX time, ms\t\
-        Left frame OS time, ms\tRight frame OS time, ms\t\
-        UNIX time delta, ms\tOS time delta, ms\n"
+        b"Pair number\tLeft frame UNIX time, us\tRight frame UNIX time, us\t\
+        Left frame OS time, us\tRight frame OS time, us\t\
+        UNIX time delta, us\tOS time delta, us\n"
     )?;
 
     for (n, pair) in index.iter().rev() {

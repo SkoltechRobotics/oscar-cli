@@ -31,7 +31,7 @@ fn save_index(index: Vec<(usize, PathBuf)>, dir: &Path) -> io::Result<()>{
     let index_path = dir.join("index.tsv");
     let mut index_file = io::BufWriter::new(fs::File::create(index_path)?);
     index_file.write_all(
-        b"N\tUNIX time, ms\tOS time, ms\tPrevious frame dt, ms\n"
+        b"N\tUNIX time, us\tOS time, us\tPrevious frame dt, us\n"
     )?;
 
     let mut t_prev = get_timestamp(&index[0].1)?.os;
