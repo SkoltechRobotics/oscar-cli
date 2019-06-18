@@ -67,7 +67,7 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<dyn error::Error>> {
         let n = f.metadata()?.len();
         (Box::new(f) as Box<dyn Read>, n)
     };
-    let mut a = tar::Archive::new(reader);
+    let mut input_tar = tar::Archive::new(reader);
 
     fs::create_dir_all(&opt.output)?;
 
@@ -91,13 +91,15 @@ pub fn convert(opt: ConvertOpt) -> Result<(), Box<dyn error::Error>> {
     let bar = ProgressBar::new(tar_size);
     bar.set_style(ProgressStyle::default_bar().template(TEMPLATE));
 
-    for (pos, file) in a.entries()?.enumerate() {
+    for (pos, file) in input_tar.entries()?.enumerate() {
         let mut file = file?;
         let path = file.header().path()?;
         let size = file.header().size()?;
         bar.set_position(file.raw_file_position() + size);
 
         index.push((pos, path.into_owned()));
+
+        if pos < opt.skip as usize { continue; }
 
         let n = index.len();
         if n > 2 { assert!(index[n-2] < index[n-1], "files are not ordered"); }
